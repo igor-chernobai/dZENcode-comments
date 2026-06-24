@@ -1,0 +1,30 @@
+[tool.ruff]
+# Общие настройки (не относятся к линтеру)
+line-length = 120
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+]
+
+[tool.ruff.lint]
+# Настройки линтера (перенесли сюда!)
+select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort (сортировка импортов)
+    "N", # pep8-naming
+    "UP", # pyupgrade (современный синтаксис)
+]
+ignore = [
+    "E501", # Игнорируем длинные строки (можно настроить отдельно)
+]
+
+[tool.ruff.format]
+# Настройки форматтера
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
