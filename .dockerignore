@@ -1,4 +1,28 @@
-.env
+# Python
+__pycache__/
 *.pyc
-__pycache__
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Media files
+media/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Redis
 redis-data
