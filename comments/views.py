@@ -1,9 +1,12 @@
-from rest_framework import generics
+from rest_framework import filters, generics
 
 from comments.models import Comment
 from comments.serializers import CommentSerializer
 
 
 class CommentListAPIView(generics.ListAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.filter(parent=None)
     serializer_class = CommentSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['username', 'email', 'created_at']
+    ordering = ['-created_at']

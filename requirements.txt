@@ -5,4 +5,5 @@ Pillow==12.2.0
 psycopg2-binary==2.9.12
 ruff==0.15.19
 django-mptt==0.18.0
-djangorestframework-recursive
+djangorestframework-recursive==0.1.2
+django-filter==25.2
