@@ -4,7 +4,7 @@ from comments.models import Comment
 from comments.serializers import CommentSerializer
 
 
-class CommentListAPIView(generics.ListAPIView):
+class CommentListCreateAPIView(generics.ListCreateAPIView):
     queryset = Comment.objects.filter(parent=None)
     serializer_class = CommentSerializer
     filter_backends = [filters.OrderingFilter]
