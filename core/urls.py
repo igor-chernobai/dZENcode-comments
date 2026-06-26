@@ -25,7 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
-    path('', include('comments.urls'))
+    path('', include('comments.urls')),
 ]
 
 if settings.DEBUG:

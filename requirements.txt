@@ -1,6 +1,6 @@
 Django==6.0.6
 djangorestframework==3.17.1
-redis==8.0.0
+redis==7.4.0
 Pillow==12.2.0
 psycopg2-binary==2.9.12
 ruff==0.15.19
@@ -9,3 +9,6 @@ djangorestframework-recursive==0.1.2
 django-filter==25.2
 bleach==6.4.0
 djangorestframework-simplejwt==5.5.1
+daphne
+channels==4.3.2
+channels-redis==4.3.0
