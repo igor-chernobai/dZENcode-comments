@@ -1,18 +1,32 @@
 import re
 
 import bleach
+from captcha.serializers import CaptchaModelSerializer
 from rest_framework import serializers
 from rest_framework_recursive.fields import RecursiveField
 
 from comments.models import Comment
 
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(CaptchaModelSerializer):
     children = serializers.ListSerializer(child=RecursiveField(), read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'username', 'email', 'home_page', 'text', 'created_at', 'parent', 'file', 'image', 'children']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'home_page',
+            'text',
+            'created_at',
+            'parent',
+            'file',
+            'image',
+            'children',
+            'captcha_code',
+            'captcha_hashkey',
+        ]
 
     def validate_username(self, value):
         if not re.match(r'^[a-zA-Z0-9]+$', value):
