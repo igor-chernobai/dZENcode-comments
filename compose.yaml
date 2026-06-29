@@ -20,7 +20,8 @@ services:
     ports:
       - "6379:6379"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   web:
     build:
@@ -36,6 +37,22 @@ services:
         condition: service_healthy
 
     restart: always
+
+  worker:
+    build:
+      context: .
+    command: celery -A core worker --loglevel=INFO
+    env_file:
+      - .env
+    volumes:
+      - ./:/usr/src/app
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+
+
 
 volumes:
   postgres_data:

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from comments.models import Comment
 from comments.serializers import CommentSerializer
+from comments.tasks import resize_img
 
 
 class CommentListCreateAPIView(generics.ListCreateAPIView):
@@ -31,6 +32,9 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         comment = serializer.save()
+
+        if comment.image:
+            resize_img.delay(comment.id)
 
         cache.delete('comments_list')
 
