@@ -22,17 +22,14 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
     ordering = ['-created_at']
     authentication_classes = []
 
-    # def list(self, request):
-    #     cache.delete('comments_list')
-    #     qs_cache = cache.get('comments_list')
-    #     if qs_cache:
-    #         qs = qs_cache
-    #     else:
-    #         qs = self.get_queryset()
-    #         cache.set('comments_list', qs, 300)
-    #
-    #     serializer = self.serializer_class(qs, many=True)
-    #     return Response(serializer.data)
+    def list(self, request, *args, **kwargs):
+        key = f'comments:{request.get_full_path()}'
+        data = cache.get(key)
+        if data is None:
+            response = super().list(request, *args, **kwargs)
+            cache.set(key, response.data, 300)
+            return response
+        return Response(data)
 
     def perform_create(self, serializer):
         comment = serializer.save()
@@ -40,7 +37,7 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
         if comment.image:
             resize_img.delay(comment.id)
 
-        cache.delete('comments_list')
+        cache.clear()
 
         channel_layers = get_channel_layer()
         async_to_sync(channel_layers.group_send)(
