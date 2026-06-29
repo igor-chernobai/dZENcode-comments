@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Comments</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: 20px auto; }
+  input, textarea { display: block; width: 100%; margin: 5px 0; padding: 6px; }
+  .comment { border: 1px solid #ccc; padding: 8px; margin: 6px 0; }
+  .children { margin-left: 25px; }
+  .meta { color: gray; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Comments</h1>
+
+<!-- form -->
+<input type="hidden" id="parent">
+<input type="text" id="username" placeholder="User Name">
+<input type="email" id="email" placeholder="E-mail">
+<input type="url" id="home_page" placeholder="Home page (optional)">
+<textarea id="text" placeholder="Text"></textarea>
+<input type="file" id="image" accept=".jpg,.jpeg,.gif,.png">
+<input type="file" id="file" accept=".txt">
+<img id="captcha_img">
+<input type="hidden" id="captcha_hashkey">
+<input type="text" id="captcha_code" placeholder="Captcha code">
+<button onclick="sendComment()">Send</button>
+
+<!-- sorting -->
+<p>
+  Sort:
+  <button onclick="setSort('username')">Name</button>
+  <button onclick="setSort('email')">Email</button>
+  <button onclick="setSort('created_at')">Date</button>
+</p>
+
+<!-- list -->
+<div id="comments"></div>
+<div id="pages"></div>
+
+<script>
+let ordering = "-created_at";  // newest first (LIFO)
+let page = 1;
+
+// load captcha image and its key
+function loadCaptcha() {
+  fetch("/api/captcha/")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("captcha_img").src = data.image_url;
+      document.getElementById("captcha_hashkey").value = data.key;
+    });
+}
+
+// send a new comment to the server
+function sendComment() {
+  // FormData is used because we send files together with text
+  let data = new FormData();
+  data.append("username", document.getElementById("username").value);
+  data.append("email", document.getElementById("email").value);
+  data.append("home_page", document.getElementById("home_page").value);
+  data.append("text", document.getElementById("text").value);
+  data.append("captcha_code", document.getElementById("captcha_code").value);
+  data.append("captcha_hashkey", document.getElementById("captcha_hashkey").value);
+
+  let parent = document.getElementById("parent").value;
+  if (parent) data.append("parent", parent);
+
+  let image = document.getElementById("image").files[0];
+  if (image) data.append("image", image);
+
+  let file = document.getElementById("file").files[0];
+  if (file) data.append("file", file);
+
+  fetch("/api/comments/", { method: "POST", body: data })
+    .then(res => {
+      if (res.ok) {
+        loadComments();
+        loadCaptcha();
+      } else {
+        res.json().then(err => alert(JSON.stringify(err)));
+        loadCaptcha();
+      }
+    });
+}
+
+// get comments from the server and show them
+function loadComments() {
+  fetch("/api/comments/?ordering=" + ordering + "&page=" + page)
+    .then(res => res.json())
+    .then(data => {
+      let list = data.results || data;
+      let box = document.getElementById("comments");
+      box.innerHTML = "";
+      for (let i = 0; i < list.length; i++) {
+        box.appendChild(makeComment(list[i]));
+      }
+      showPages(data.count || 0);
+    });
+}
+
+// build the HTML for one comment, then do the same for its replies (recursion)
+function makeComment(c) {
+  let div = document.createElement("div");
+  div.className = "comment";
+
+  let html = "<div class='meta'>" + c.username + " | " + c.email + " | " + c.created_at + "</div>";
+  html += "<div>" + c.text + "</div>";
+  if (c.image) html += "<img src='" + c.image + "' height='100'>";
+  if (c.file) html += "<a href='" + c.file + "' target='_blank'>file</a>";
+  html += "<button onclick='replyTo(" + c.id + ")'>Reply</button>";
+  div.innerHTML = html;
+
+  let children = document.createElement("div");
+  children.className = "children";
+  for (let i = 0; i < (c.children || []).length; i++) {
+    children.appendChild(makeComment(c.children[i]));  // same function for replies
+  }
+  div.appendChild(children);
+  return div;
+}
+
+// when user clicks Reply: remember the parent id
+function replyTo(id) {
+  document.getElementById("parent").value = id;
+  window.scrollTo(0, 0);
+}
+
+// change sorting field (click again = reverse order)
+function setSort(field) {
+  if (ordering === field) {
+    ordering = "-" + field;
+  } else {
+    ordering = field;
+  }
+  page = 1;
+  loadComments();
+}
+
+// page buttons (server returns 25 per page)
+function showPages(count) {
+  let total = Math.ceil(count / 25);
+  let box = document.getElementById("pages");
+  box.innerHTML = "";
+  for (let p = 1; p <= total; p++) {
+    let btn = document.createElement("button");
+    btn.textContent = p;
+    btn.onclick = function () { page = p; loadComments(); };
+    box.appendChild(btn);
+  }
+}
+
+// websocket: when someone adds a comment, reload the list
+let socket = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/comments/"
+);
+socket.onmessage = function () { loadComments(); };
+
+// start
+loadCaptcha();
+loadComments();
+</script>
+</body>
+</html>

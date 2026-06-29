@@ -45,3 +45,8 @@ class CommentSerializer(CaptchaModelSerializer):
         attrs = {'a': ['title', 'href']}
 
         return bleach.clean(value, tags=tags, attributes=attrs, strip=True)
+
+    def create(self, validated_data):
+        validated_data.pop('captcha_code', None)
+        validated_data.pop('captcha_hashkey', None)
+        return super().create(validated_data)
